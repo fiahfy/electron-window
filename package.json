@@ -1,0 +1,68 @@
+{
+  "name": "@fiahfy/electron-window",
+  "description": "Manage Window States in Electron Apps.",
+  "version": "0.0.0",
+  "author": {
+    "name": "fiahfy",
+    "email": "d.fiahfy@gmail.com",
+    "url": "https://fiahfy.github.io/"
+  },
+  "bugs": {
+    "url": "https://github.com/fiahfy/electron-window/issues"
+  },
+  "dependencies": {
+    "electron-window-state": "^5.0.3"
+  },
+  "devDependencies": {
+    "@fiahfy/eslint-config": "^0.0.21",
+    "@fiahfy/prettier-config": "^0.0.3",
+    "@fiahfy/tsconfig": "^0.0.2",
+    "@tsconfig/node20": "^20.1.2",
+    "electron": "^27.0.2",
+    "eslint": "^8.52.0",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.js"
+    },
+    "./preload": {
+      "import": "./dist/preload.js",
+      "types": "./dist/preload.d.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "homepage": "https://github.com/fiahfy/electron-window",
+  "keywords": [
+    "electron"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "peerDependencies": {
+    "electron": ">=27"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fiahfy/electron-window.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "format": "prettier -c --ignore-path .gitignore .",
+    "lint": "eslint --ext .js,.ts --ignore-path .gitignore .",
+    "test": "npm run format && npm run lint && vitest run"
+  },
+  "type": "module",
+  "types": "./dist/index.d.js"
+}
