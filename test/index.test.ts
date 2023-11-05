@@ -17,7 +17,7 @@ describe('createManager', () => {
   test('should work', () => {
     const baseCreateWindow = () => new BrowserWindow()
     const manager = createManager(baseCreateWindow)
-    expect(ipcMain.handle).toBeCalledTimes(2)
+    expect(ipcMain.handle).toBeCalledTimes(3)
     expectTypeOf(manager.create).toBeFunction()
     expectTypeOf(manager.restore).toBeFunction()
     expectTypeOf(manager.save).toBeFunction()

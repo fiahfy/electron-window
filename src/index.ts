@@ -23,11 +23,8 @@ export const createManager = <T>(
     [id: number]: { index: number; params?: T }
   } = {}
 
-  const getWindowId = (event: IpcMainInvokeEvent) =>
-    BrowserWindow.fromWebContents(event.sender)?.id
-
   ipcMain.handle('restoreWindow', (event: IpcMainInvokeEvent) => {
-    const windowId = getWindowId(event)
+    const windowId = BrowserWindow.fromWebContents(event.sender)?.id
     if (!windowId) {
       return undefined
     }
@@ -42,6 +39,13 @@ export const createManager = <T>(
   ipcMain.handle('openWindow', (_event: IpcMainInvokeEvent, params?: T) =>
     create(params),
   )
+  ipcMain.handle('closeWindow', (event: IpcMainInvokeEvent) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (!window) {
+      return
+    }
+    window.close()
+  })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isVisibilities = (visibilities: any): visibilities is boolean[] =>
