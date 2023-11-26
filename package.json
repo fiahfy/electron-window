@@ -1,7 +1,7 @@
 {
   "name": "@fiahfy/electron-window",
   "description": "Manage Window States in Electron Apps.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": {
     "name": "fiahfy",
     "email": "d.fiahfy@gmail.com",
