@@ -12,6 +12,13 @@ export type Operations<T> = {
   isFullscreen: () => Promise<boolean>
   setFullscreen: (fullscreen: boolean) => Promise<void>
   toggleFullscreen: () => Promise<void>
+  // maximize
+  addMaximizeListener: (callback: (maximized: boolean) => void) => () => void
+  isMaximized: () => Promise<boolean>
+  maximize: () => Promise<void>
+  setMaximized: (maximized: boolean) => Promise<void>
+  toggleMaximized: () => Promise<void>
+  unmaximize: () => Promise<void>
   // traffic light
   addTrafficLightListener: (
     callback: (visibility: boolean) => void,
@@ -31,7 +38,9 @@ export const exposeOperations = <T>(): Operations<T> => {
       const listener = (_event: IpcRendererEvent, fullscreen: boolean) =>
         callback(fullscreen)
       ipcRenderer.on('sendFullscreen', listener)
-      return () => ipcRenderer.removeListener('sendFullscreen', listener)
+      return () => {
+        ipcRenderer.removeListener('sendFullscreen', listener)
+      }
     },
     enterFullscreen: () => ipcRenderer.invoke('enterFullscreen'),
     exitFullscreen: () => ipcRenderer.invoke('exitFullscreen'),
@@ -39,6 +48,21 @@ export const exposeOperations = <T>(): Operations<T> => {
     setFullscreen: (fullscreen: boolean) =>
       ipcRenderer.invoke('setFullscreen', fullscreen),
     toggleFullscreen: () => ipcRenderer.invoke('toggleFullscreen'),
+    // maximize
+    addMaximizeListener: (callback: (maximized: boolean) => void) => {
+      const listener = (_event: IpcRendererEvent, maximized: boolean) =>
+        callback(maximized)
+      ipcRenderer.on('sendMaximized', listener)
+      return () => {
+        ipcRenderer.removeListener('sendMaximized', listener)
+      }
+    },
+    isMaximized: () => ipcRenderer.invoke('isMaximized'),
+    maximize: () => ipcRenderer.invoke('maximize'),
+    setMaximized: (maximized: boolean) =>
+      ipcRenderer.invoke('setMaximized', maximized),
+    toggleMaximized: () => ipcRenderer.invoke('toggleMaximized'),
+    unmaximize: () => ipcRenderer.invoke('unmaximize'),
     // traffic light
     addTrafficLightListener: (callback: (visibility: boolean) => void) => {
       const listener = (_event: IpcRendererEvent, visibility: boolean) =>

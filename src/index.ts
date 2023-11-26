@@ -101,6 +101,12 @@ export const createManager = <T>(
         getTrafficLightVisibility(browserWindow),
       )
     })
+    browserWindow.on('maximize', () =>
+      browserWindow.webContents.send('sendMaximize', true),
+    )
+    browserWindow.on('unmaximize', () =>
+      browserWindow.webContents.send('sendMaximize', false),
+    )
 
     windowState.manage(browserWindow)
 
@@ -211,6 +217,47 @@ export const createManager = <T>(
       return
     }
     browserWindow.setFullScreen(!browserWindow.isFullScreen())
+  })
+  // maximize
+  ipcMain.handle('isMaximized', (event: IpcMainInvokeEvent) => {
+    const browserWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!browserWindow) {
+      return false
+    }
+    return browserWindow.isMaximized()
+  })
+  ipcMain.handle(
+    'setMaximized',
+    (event: IpcMainInvokeEvent, maximized: boolean) => {
+      const browserWindow = BrowserWindow.fromWebContents(event.sender)
+      if (!browserWindow) {
+        return
+      }
+      maximized ? browserWindow.maximize() : browserWindow.unmaximize()
+    },
+  )
+  ipcMain.handle('maximize', (event: IpcMainInvokeEvent) => {
+    const browserWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!browserWindow) {
+      return
+    }
+    browserWindow.maximize()
+  })
+  ipcMain.handle('unmaximize', (event: IpcMainInvokeEvent) => {
+    const browserWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!browserWindow) {
+      return
+    }
+    browserWindow.unmaximize()
+  })
+  ipcMain.handle('toggleMaximize', (event: IpcMainInvokeEvent) => {
+    const browserWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!browserWindow) {
+      return
+    }
+    browserWindow.isMaximized()
+      ? browserWindow.unmaximize()
+      : browserWindow.maximize()
   })
   // traffic light
   ipcMain.handle('getTrafficLightVisibility', (event: IpcMainInvokeEvent) => {
