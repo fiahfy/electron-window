@@ -4,7 +4,7 @@ export type Operations<T> = {
   // window
   closeWindow: () => Promise<void>
   openWindow: (params?: T) => Promise<void>
-  restoreWindow: () => Promise<{ index: number; params?: T }>
+  restoreWindow: () => Promise<{ id: number; params?: T }>
   // fullscreen
   addFullscreenListener: (callback: (fullscreen: boolean) => void) => () => void
   enterFullscreen: () => Promise<void>

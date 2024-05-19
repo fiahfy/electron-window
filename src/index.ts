@@ -5,11 +5,12 @@ import {
   app,
   ipcMain,
 } from 'electron'
-import windowStateKeeper, { State as _State } from 'electron-window-state'
-import { readFile, unlink, writeFile } from 'node:fs/promises'
+import windowStateKeeper from 'electron-window-state'
+import { unlinkSync } from 'fs'
+import { readFileSync, writeFileSync } from 'jsonfile'
 import { join } from 'node:path'
 
-export type State = _State
+type State = { ids: number[] }
 
 export const createManager = <T>(
   baseCreateWindow: (options: BrowserWindowConstructorOptions) => BrowserWindow,
@@ -18,39 +19,43 @@ export const createManager = <T>(
   const savedDirectoryPath = app.getPath('userData')
   const savedPath = join(savedDirectoryPath, 'window-state.json')
 
-  let visibilities: boolean[] = []
+  let state: State = { ids: [] }
 
-  const dataMap: {
-    [id: number]: { index: number; params?: T }
+  const windowData: {
+    [browserWindowId: number]: { id: number; params?: T }
   } = {}
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isVisibilities = (visibilities: any): visibilities is boolean[] =>
-    Array.isArray(visibilities) &&
-    visibilities.every((visibility: unknown) => typeof visibility === 'boolean')
+  const isState = (state: any): state is State =>
+    typeof state === 'object' &&
+    state.ids &&
+    Array.isArray(state.ids) &&
+    state.ids.every((id: unknown) => typeof id === 'number')
 
-  const restoreVisibilities = async () => {
+  const restoreState = () => {
     try {
-      const json = await readFile(savedPath, 'utf8')
-      const data = JSON.parse(json)
-      if (isVisibilities(data)) {
-        visibilities = data
+      const data = readFileSync(savedPath)
+      if (isState(data)) {
+        state = data
       }
     } catch (e) {
       // noop
     }
   }
 
-  const saveVisibilities = async () => {
-    const json = JSON.stringify(visibilities)
-    await writeFile(savedPath, json)
+  const saveState = () => {
+    try {
+      writeFileSync(savedPath, state)
+    } catch (e) {
+      // noop
+    }
   }
 
-  const getWindowFilename = (index: number) => `window-state_${index}.json`
+  const getWindowFilename = (id: number) => `window-state_${id}.json`
 
-  const deleteWindowFile = async (index: number) => {
+  const deleteWindowFile = (id: number) => {
     try {
-      await unlink(join(savedDirectoryPath, getWindowFilename(index)))
+      unlinkSync(join(savedDirectoryPath, getWindowFilename(id)))
     } catch (e) {
       // noop
     }
@@ -65,27 +70,30 @@ export const createManager = <T>(
     return isMac && !isFullScreen && isWindowButtonVisibility
   }
 
-  const createWindow = async (
-    index: number,
+  const createWindow = (
+    id: number,
     params?: T,
-    options?: Partial<State>,
+    options?: BrowserWindowConstructorOptions,
   ) => {
     if (options) {
-      await deleteWindowFile(index)
+      deleteWindowFile(id)
     }
 
     const windowState = windowStateKeeper({
       path: savedDirectoryPath,
-      file: getWindowFilename(index),
+      file: getWindowFilename(id),
     })
 
     const browserWindow = baseCreateWindow({ ...windowState, ...options })
 
-    dataMap[browserWindow.id] = { index, ...(params ? { params } : {}) }
+    windowData[browserWindow.id] = { id, ...(params ? { params } : {}) }
 
     browserWindow.on('close', () => {
-      delete dataMap[browserWindow.id]
-      visibilities[index] = false
+      delete windowData[browserWindow.id]
+      state = {
+        ...state,
+        ids: state.ids.filter((currentId) => currentId !== id),
+      }
     })
     browserWindow.on('enter-full-screen', () => {
       browserWindow.webContents.send('sendFullscreen', true)
@@ -133,41 +141,37 @@ export const createManager = <T>(
     }
   }
 
+  const findMissingId = () =>
+    state.ids
+      .sort((a, b) => a - b)
+      .reduce((acc, i) => (i === acc ? acc + 1 : acc), 1)
+
   const create = (params?: T) => {
-    const index = visibilities.reduce(
-      (acc, visibility, index) => (visibility ? acc : Math.min(index, acc)),
-      visibilities.length,
-    )
-    visibilities[index] = true
-    return createWindow(index, params, getDefaultOptions())
+    const id = findMissingId()
+    state = { ...state, ids: [...state.ids, id] }
+    return createWindow(id, params, getDefaultOptions())
   }
 
-  const restore = async () => {
-    await restoreVisibilities()
-    return visibilities.reduce(
-      async (promise, visibility, index) => {
-        const acc = await promise
-        return visibility ? [...acc, await createWindow(index)] : acc
-      },
-      Promise.resolve([]) as Promise<BrowserWindow[]>,
-    )
+  const restore = () => {
+    restoreState()
+    return state.ids.map((id) => createWindow(id))
   }
 
-  const save = () => saveVisibilities()
+  const save = () => saveState()
 
   // window
   ipcMain.handle('restoreWindow', (event: IpcMainInvokeEvent) => {
-    const windowId = BrowserWindow.fromWebContents(event.sender)?.id
-    if (!windowId) {
+    const browserWindowId = BrowserWindow.fromWebContents(event.sender)?.id
+    if (!browserWindowId) {
       return undefined
     }
-    const data = dataMap[windowId]
+    const data = windowData[browserWindowId]
     if (!data) {
       return undefined
     }
-    const duplicated = { ...data }
+    const clonedData = { ...data }
     delete data.params
-    return duplicated
+    return clonedData
   })
   ipcMain.handle('openWindow', (_event: IpcMainInvokeEvent, params?: T) =>
     create(params),
