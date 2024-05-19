@@ -17,7 +17,6 @@
   "devDependencies": {
     "@fiahfy/eslint-config": "^0.0.21",
     "@fiahfy/prettier-config": "^0.0.3",
-    "@fiahfy/tsconfig": "^0.0.2",
     "@tsconfig/node20": "^20.1.4",
     "@types/jsonfile": "^6.1.4",
     "electron": "^30.0.6",

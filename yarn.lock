@@ -178,11 +178,6 @@
   resolved "https://registry.yarnpkg.com/@fiahfy/prettier-config/-/prettier-config-0.0.3.tgz#89558a0dc91f890df855ba892c6a07403e02f869"
   integrity sha512-eV6vDznC+VSO41zKLmmrJvX/6S78QMcDnMbyIMyfekPkZvezdexp92LvpUO+gTBdJM7EHkizTaNaDZZKfXHZ0w==
 
-"@fiahfy/tsconfig@^0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@fiahfy/tsconfig/-/tsconfig-0.0.2.tgz#c4950a18ac2ee756ba7468e746cb4f710e486230"
-  integrity sha512-xd7s8E0KkCnG952csB3a57MSvH+lnW8c+HEVydCPOdAH65r1mu66ApoJPIfPucD/4DiHG4Bcpjre6ZtjVyBSVQ==
-
 "@humanwhocodes/config-array@^0.11.14":
   version "0.11.14"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.14.tgz#d78e481a039f7566ecc9660b4ea7fe6b1fec442b"
