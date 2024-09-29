@@ -1,4 +1,4 @@
-import { IpcRendererEvent, ipcRenderer } from 'electron'
+import { type IpcRendererEvent, ipcRenderer } from 'electron'
 
 export type Operations<T> = {
   // window

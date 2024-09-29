@@ -1,14 +1,14 @@
+import { unlinkSync } from 'node:fs'
+import { join } from 'node:path'
 import {
   BrowserWindow,
-  BrowserWindowConstructorOptions,
-  IpcMainInvokeEvent,
+  type BrowserWindowConstructorOptions,
+  type IpcMainInvokeEvent,
   app,
   ipcMain,
 } from 'electron'
 import windowStateKeeper from 'electron-window-state'
-import { unlinkSync } from 'fs'
 import { readFileSync, writeFileSync } from 'jsonfile'
-import { join } from 'node:path'
 
 type State = { ids: number[] }
 
@@ -25,7 +25,7 @@ export const createManager = <T>(
     [browserWindowId: number]: { id: number; params?: T }
   } = {}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const isState = (state: any): state is State =>
     typeof state === 'object' &&
     state.ids &&
@@ -63,7 +63,6 @@ export const createManager = <T>(
 
   const getTrafficLightVisibility = (browserWindow: BrowserWindow) => {
     const isFullScreen = browserWindow.isFullScreen()
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     // @see https://github.com/electron/electron/blob/79e714a82506f133516749ff0447717e92104bc1/typings/internal-electron.d.ts#L38
     const isWindowButtonVisibility = browserWindow._getWindowButtonVisibility()
@@ -170,7 +169,7 @@ export const createManager = <T>(
       return undefined
     }
     const clonedData = { ...data }
-    delete data.params
+    data.params = undefined
     return clonedData
   })
   ipcMain.handle('openWindow', (_event: IpcMainInvokeEvent, params?: T) =>

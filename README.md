@@ -1,6 +1,6 @@
 # electron-window
 
-![badge](https://github.com/fiahfy/electron-window/workflows/Node.js%20Package/badge.svg)
+[![Publish](https://github.com/fiahfy/electron-window/actions/workflows/publish.yml/badge.svg)](https://github.com/fiahfy/electron-window/actions/workflows/publish.yml)
 
 > Manage Window States in Electron Apps.
 
