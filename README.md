@@ -16,8 +16,6 @@ npm install @fiahfy/electron-window
 // main.js
 import { createManager } from '@fiahfy/electron-window'
 
-const manager = createManager()
-
 const baseCreateWindow = (options) => {
   const browserWindow = new BrowserWindow({
     ...options,
@@ -36,11 +34,11 @@ app.on('activate', async () => {
 })
 
 app.on('before-quit', async () => {
-  await windowManager.save()
+  await manager.save()
 })
 
 app.whenReady().then(async () => {
-  const browserWindows = await windowManager.restore()
+  const browserWindows = await manager.restore()
   if (browserWindows.length === 0) {
     await manager.create()
   }
