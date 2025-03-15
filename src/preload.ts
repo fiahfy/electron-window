@@ -21,6 +21,7 @@ export type Operations<T> = {
   unmaximize: () => Promise<void>
   // focus
   addFocusListener: (callback: (focused: boolean) => void) => () => void
+  isFocused: () => Promise<boolean>
   // traffic light
   addTrafficLightListener: (
     callback: (visibility: boolean) => void,
@@ -74,6 +75,7 @@ export const exposeOperations = <T>(): Operations<T> => {
         ipcRenderer.removeListener('sendFocus', listener)
       }
     },
+    isFocused: () => ipcRenderer.invoke('isFocused'),
     // traffic light
     addTrafficLightListener: (callback: (visibility: boolean) => void) => {
       const listener = (_event: IpcRendererEvent, visibility: boolean) =>

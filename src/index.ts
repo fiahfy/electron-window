@@ -268,6 +268,14 @@ export const createManager = <T>(
       ? browserWindow.unmaximize()
       : browserWindow.maximize()
   })
+  // focus
+  ipcMain.handle('isFocused', (event: IpcMainInvokeEvent) => {
+    const browserWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!browserWindow) {
+      return false
+    }
+    return browserWindow.isFocused()
+  })
   // traffic light
   ipcMain.handle('getTrafficLightVisibility', (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
