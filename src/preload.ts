@@ -19,6 +19,8 @@ export type Operations<T> = {
   setMaximized: (maximized: boolean) => Promise<void>
   toggleMaximized: () => Promise<void>
   unmaximize: () => Promise<void>
+  // focus
+  addFocusListener: (callback: (focused: boolean) => void) => () => void
   // traffic light
   addTrafficLightListener: (
     callback: (visibility: boolean) => void,
@@ -63,6 +65,15 @@ export const exposeOperations = <T>(): Operations<T> => {
       ipcRenderer.invoke('setMaximized', maximized),
     toggleMaximized: () => ipcRenderer.invoke('toggleMaximized'),
     unmaximize: () => ipcRenderer.invoke('unmaximize'),
+    // focus
+    addFocusListener: (callback: (focused: boolean) => void) => {
+      const listener = (_event: IpcRendererEvent, focused: boolean) =>
+        callback(focused)
+      ipcRenderer.on('sendFocus', listener)
+      return () => {
+        ipcRenderer.removeListener('sendFocus', listener)
+      }
+    },
     // traffic light
     addTrafficLightListener: (callback: (visibility: boolean) => void) => {
       const listener = (_event: IpcRendererEvent, visibility: boolean) =>

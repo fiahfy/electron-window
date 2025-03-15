@@ -114,6 +114,12 @@ export const createManager = <T>(
     browserWindow.on('unmaximize', () =>
       browserWindow.webContents.send('sendMaximize', false),
     )
+    browserWindow.on('focus', () =>
+      browserWindow.webContents.send('sendFocus', true),
+    )
+    browserWindow.on('blur', () =>
+      browserWindow.webContents.send('sendFocus', false),
+    )
 
     windowState.manage(browserWindow)
 
