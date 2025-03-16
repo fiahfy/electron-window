@@ -10,6 +10,8 @@ import {
 import windowStateKeeper from 'electron-window-state'
 import { readFileSync, writeFileSync } from 'jsonfile'
 
+const prefix = 'electron-window.'
+
 type State = { ids: number[] }
 
 export const createManager = <T>(
@@ -95,30 +97,30 @@ export const createManager = <T>(
       }
     })
     browserWindow.on('enter-full-screen', () => {
-      browserWindow.webContents.send('sendFullscreen', true)
+      browserWindow.webContents.send(`${prefix}onFullscreenChange`, true)
       browserWindow.webContents.send(
-        'sendTrafficLightVisibility',
+        `${prefix}onTrafficLightVisibilityChange`,
         getTrafficLightVisibility(browserWindow),
       )
     })
     browserWindow.on('leave-full-screen', () => {
-      browserWindow.webContents.send('sendFullscreen', false)
+      browserWindow.webContents.send(`${prefix}onFullscreenChange`, false)
       browserWindow.webContents.send(
-        'sendTrafficLightVisibility',
+        `${prefix}onTrafficLightVisibilityChange`,
         getTrafficLightVisibility(browserWindow),
       )
     })
     browserWindow.on('maximize', () =>
-      browserWindow.webContents.send('sendMaximize', true),
+      browserWindow.webContents.send(`${prefix}onMaximizeChange`, true),
     )
     browserWindow.on('unmaximize', () =>
-      browserWindow.webContents.send('sendMaximize', false),
+      browserWindow.webContents.send(`${prefix}onMaximizeChange`, false),
     )
     browserWindow.on('focus', () =>
-      browserWindow.webContents.send('sendFocus', true),
+      browserWindow.webContents.send(`${prefix}onFocusChange`, true),
     )
     browserWindow.on('blur', () =>
-      browserWindow.webContents.send('sendFocus', false),
+      browserWindow.webContents.send(`${prefix}onFocusChange`, false),
     )
 
     windowState.manage(browserWindow)
@@ -165,7 +167,7 @@ export const createManager = <T>(
   const save = () => saveState()
 
   // window
-  ipcMain.handle('restoreWindow', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}restore`, (event: IpcMainInvokeEvent) => {
     const browserWindowId = BrowserWindow.fromWebContents(event.sender)?.id
     if (!browserWindowId) {
       return undefined
@@ -178,10 +180,10 @@ export const createManager = <T>(
     data.params = undefined
     return clonedData
   })
-  ipcMain.handle('openWindow', (_event: IpcMainInvokeEvent, params?: T) =>
+  ipcMain.handle(`${prefix}open`, (_event: IpcMainInvokeEvent, params?: T) =>
     create(params),
   )
-  ipcMain.handle('closeWindow', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}close`, (event: IpcMainInvokeEvent) => {
     const window = BrowserWindow.fromWebContents(event.sender)
     if (!window) {
       return
@@ -189,7 +191,7 @@ export const createManager = <T>(
     window.close()
   })
   // fullscreen
-  ipcMain.handle('isFullscreen', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}isFullscreen`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return false
@@ -197,7 +199,7 @@ export const createManager = <T>(
     return browserWindow.isFullScreen()
   })
   ipcMain.handle(
-    'setFullscreen',
+    `${prefix}setFullscreen`,
     (event: IpcMainInvokeEvent, fullscreen: boolean) => {
       const browserWindow = BrowserWindow.fromWebContents(event.sender)
       if (!browserWindow) {
@@ -206,21 +208,21 @@ export const createManager = <T>(
       browserWindow.setFullScreen(fullscreen)
     },
   )
-  ipcMain.handle('enterFullscreen', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}enterFullscreen`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return
     }
     browserWindow.setFullScreen(true)
   })
-  ipcMain.handle('exitFullscreen', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}exitFullscreen`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return
     }
     browserWindow.setFullScreen(false)
   })
-  ipcMain.handle('toggleFullscreen', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}toggleFullscreen`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return
@@ -228,7 +230,7 @@ export const createManager = <T>(
     browserWindow.setFullScreen(!browserWindow.isFullScreen())
   })
   // maximize
-  ipcMain.handle('isMaximized', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}isMaximized`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return false
@@ -236,7 +238,7 @@ export const createManager = <T>(
     return browserWindow.isMaximized()
   })
   ipcMain.handle(
-    'setMaximized',
+    `${prefix}setMaximized`,
     (event: IpcMainInvokeEvent, maximized: boolean) => {
       const browserWindow = BrowserWindow.fromWebContents(event.sender)
       if (!browserWindow) {
@@ -245,21 +247,21 @@ export const createManager = <T>(
       maximized ? browserWindow.maximize() : browserWindow.unmaximize()
     },
   )
-  ipcMain.handle('maximize', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}maximize`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return
     }
     browserWindow.maximize()
   })
-  ipcMain.handle('unmaximize', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}unmaximize`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return
     }
     browserWindow.unmaximize()
   })
-  ipcMain.handle('toggleMaximize', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}toggleMaximize`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return
@@ -269,7 +271,7 @@ export const createManager = <T>(
       : browserWindow.maximize()
   })
   // focus
-  ipcMain.handle('isFocused', (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}isFocused`, (event: IpcMainInvokeEvent) => {
     const browserWindow = BrowserWindow.fromWebContents(event.sender)
     if (!browserWindow) {
       return false
@@ -277,16 +279,19 @@ export const createManager = <T>(
     return browserWindow.isFocused()
   })
   // traffic light
-  ipcMain.handle('getTrafficLightVisibility', (event: IpcMainInvokeEvent) => {
-    const browserWindow = BrowserWindow.fromWebContents(event.sender)
-    if (!browserWindow) {
-      return false
-    }
-    return getTrafficLightVisibility(browserWindow)
-  })
   ipcMain.handle(
-    'setTrafficLightVisibility',
-    (event: IpcMainInvokeEvent, visibility: boolean) => {
+    `${prefix}getTrafficLightVisibility`,
+    (event: IpcMainInvokeEvent) => {
+      const browserWindow = BrowserWindow.fromWebContents(event.sender)
+      if (!browserWindow) {
+        return false
+      }
+      return getTrafficLightVisibility(browserWindow)
+    },
+  )
+  ipcMain.handle(
+    `${prefix}setTrafficLightVisibility`,
+    (event: IpcMainInvokeEvent, visible: boolean) => {
       if (!isMac) {
         return
       }
@@ -294,9 +299,9 @@ export const createManager = <T>(
       if (!browserWindow) {
         return
       }
-      browserWindow.setWindowButtonVisibility(visibility)
+      browserWindow.setWindowButtonVisibility(visible)
       browserWindow.webContents.send(
-        'sendTrafficLightVisibility',
+        `${prefix}onTrafficLightVisibilityChange`,
         getTrafficLightVisibility(browserWindow),
       )
     },

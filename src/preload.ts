@@ -1,93 +1,95 @@
 import { type IpcRendererEvent, ipcRenderer } from 'electron'
 
+const prefix = 'electron-window.'
+
 export type Operations<T> = {
   // window
-  closeWindow: () => Promise<void>
-  openWindow: (params?: T) => Promise<void>
-  restoreWindow: () => Promise<{ id: number; params?: T }>
+  restore: () => Promise<{ id: number; params?: T }>
+  open: (params?: T) => void
+  close: () => void
   // fullscreen
-  addFullscreenListener: (callback: (fullscreen: boolean) => void) => () => void
-  enterFullscreen: () => Promise<void>
-  exitFullscreen: () => Promise<void>
+  onFullscreenChange: (callback: (fullscreen: boolean) => void) => () => void
   isFullscreen: () => Promise<boolean>
-  setFullscreen: (fullscreen: boolean) => Promise<void>
-  toggleFullscreen: () => Promise<void>
+  setFullscreen: (fullscreen: boolean) => void
+  enterFullscreen: () => void
+  exitFullscreen: () => void
+  toggleFullscreen: () => void
   // maximize
-  addMaximizeListener: (callback: (maximized: boolean) => void) => () => void
+  onMaximizeChange: (callback: (maximized: boolean) => void) => () => void
   isMaximized: () => Promise<boolean>
-  maximize: () => Promise<void>
-  setMaximized: (maximized: boolean) => Promise<void>
-  toggleMaximized: () => Promise<void>
-  unmaximize: () => Promise<void>
+  setMaximized: (maximized: boolean) => void
+  maximize: () => void
+  unmaximize: () => void
+  toggleMaximized: () => void
   // focus
-  addFocusListener: (callback: (focused: boolean) => void) => () => void
+  onFocusChange: (callback: (focused: boolean) => void) => () => void
   isFocused: () => Promise<boolean>
   // traffic light
-  addTrafficLightListener: (
-    callback: (visibility: boolean) => void,
+  onTrafficLightVisibilityChange: (
+    callback: (visible: boolean) => void,
   ) => () => void
   getTrafficLightVisibility: () => Promise<boolean>
-  setTrafficLightVisibility: (visibility: boolean) => Promise<void>
+  setTrafficLightVisibility: (visible: boolean) => void
 }
 
 export const exposeOperations = <T>(): Operations<T> => {
   return {
     // window
-    closeWindow: () => ipcRenderer.invoke('closeWindow'),
-    openWindow: (params?: T) => ipcRenderer.invoke('openWindow', params),
-    restoreWindow: () => ipcRenderer.invoke('restoreWindow'),
+    restore: () => ipcRenderer.invoke(`${prefix}restore`),
+    open: (params?: T) => ipcRenderer.send(`${prefix}open`, params),
+    close: () => ipcRenderer.send(`${prefix}close`),
     // fullscreen
-    addFullscreenListener: (callback: (fullscreen: boolean) => void) => {
+    onFullscreenChange: (callback: (fullscreen: boolean) => void) => {
       const listener = (_event: IpcRendererEvent, fullscreen: boolean) =>
         callback(fullscreen)
-      ipcRenderer.on('sendFullscreen', listener)
+      ipcRenderer.on(`${prefix}onFullscreenChange`, listener)
       return () => {
-        ipcRenderer.removeListener('sendFullscreen', listener)
+        ipcRenderer.off(`${prefix}onFullscreenChange`, listener)
       }
     },
-    enterFullscreen: () => ipcRenderer.invoke('enterFullscreen'),
-    exitFullscreen: () => ipcRenderer.invoke('exitFullscreen'),
-    isFullscreen: () => ipcRenderer.invoke('isFullscreen'),
+    isFullscreen: () => ipcRenderer.invoke(`${prefix}isFullscreen`),
     setFullscreen: (fullscreen: boolean) =>
-      ipcRenderer.invoke('setFullscreen', fullscreen),
-    toggleFullscreen: () => ipcRenderer.invoke('toggleFullscreen'),
+      ipcRenderer.send(`${prefix}setFullscreen`, fullscreen),
+    enterFullscreen: () => ipcRenderer.send(`${prefix}enterFullscreen`),
+    exitFullscreen: () => ipcRenderer.send(`${prefix}exitFullscreen`),
+    toggleFullscreen: () => ipcRenderer.send(`${prefix}toggleFullscreen`),
     // maximize
-    addMaximizeListener: (callback: (maximized: boolean) => void) => {
+    onMaximizeChange: (callback: (maximized: boolean) => void) => {
       const listener = (_event: IpcRendererEvent, maximized: boolean) =>
         callback(maximized)
-      ipcRenderer.on('sendMaximized', listener)
+      ipcRenderer.on(`${prefix}onMaximizeChange`, listener)
       return () => {
-        ipcRenderer.removeListener('sendMaximized', listener)
+        ipcRenderer.off(`${prefix}onMaximizeChange`, listener)
       }
     },
-    isMaximized: () => ipcRenderer.invoke('isMaximized'),
-    maximize: () => ipcRenderer.invoke('maximize'),
+    isMaximized: () => ipcRenderer.invoke(`${prefix}isMaximized`),
     setMaximized: (maximized: boolean) =>
-      ipcRenderer.invoke('setMaximized', maximized),
-    toggleMaximized: () => ipcRenderer.invoke('toggleMaximized'),
-    unmaximize: () => ipcRenderer.invoke('unmaximize'),
+      ipcRenderer.send(`${prefix}setMaximized`, maximized),
+    maximize: () => ipcRenderer.send(`${prefix}maximize`),
+    unmaximize: () => ipcRenderer.send(`${prefix}unmaximize`),
+    toggleMaximized: () => ipcRenderer.send(`${prefix}toggleMaximized`),
     // focus
-    addFocusListener: (callback: (focused: boolean) => void) => {
+    onFocusChange: (callback: (focused: boolean) => void) => {
       const listener = (_event: IpcRendererEvent, focused: boolean) =>
         callback(focused)
-      ipcRenderer.on('sendFocus', listener)
+      ipcRenderer.on(`${prefix}onFocusChange`, listener)
       return () => {
-        ipcRenderer.removeListener('sendFocus', listener)
+        ipcRenderer.off(`${prefix}onFocusChange`, listener)
       }
     },
-    isFocused: () => ipcRenderer.invoke('isFocused'),
+    isFocused: () => ipcRenderer.invoke(`${prefix}isFocused`),
     // traffic light
-    addTrafficLightListener: (callback: (visibility: boolean) => void) => {
-      const listener = (_event: IpcRendererEvent, visibility: boolean) =>
-        callback(visibility)
-      ipcRenderer.on('sendTrafficLightVisibility', listener)
+    onTrafficLightVisibilityChange: (callback: (visible: boolean) => void) => {
+      const listener = (_event: IpcRendererEvent, visible: boolean) =>
+        callback(visible)
+      ipcRenderer.on(`${prefix}onTrafficLightVisibilityChange`, listener)
       return () => {
-        ipcRenderer.removeListener('sendTrafficLightVisibility', listener)
+        ipcRenderer.off(`${prefix}onTrafficLightVisibilityChange`, listener)
       }
     },
     getTrafficLightVisibility: () =>
-      ipcRenderer.invoke('getTrafficLightVisibility'),
-    setTrafficLightVisibility: (visibility: boolean) =>
-      ipcRenderer.invoke('setTrafficLightVisibility', visibility),
+      ipcRenderer.invoke(`${prefix}getTrafficLightVisibility`),
+    setTrafficLightVisibility: (visible: boolean) =>
+      ipcRenderer.send(`${prefix}setTrafficLightVisibility`, visible),
   }
 }
