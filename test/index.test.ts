@@ -9,6 +9,7 @@ vi.mock('electron', () => {
   }
   const ipcMain = {
     handle: vi.fn(),
+    on: vi.fn(),
   }
   return { BrowserWindow, app, ipcMain }
 })
@@ -17,7 +18,8 @@ describe('createManager', () => {
   test('should work', () => {
     const baseCreateWindow = () => new BrowserWindow()
     const manager = createManager(baseCreateWindow)
-    expect(ipcMain.handle).toBeCalledTimes(16)
+    expect(ipcMain.handle).toBeCalledTimes(5)
+    expect(ipcMain.on).toBeCalledTimes(11)
     expectTypeOf(manager.create).toBeFunction()
     expectTypeOf(manager.restore).toBeFunction()
     expectTypeOf(manager.save).toBeFunction()
