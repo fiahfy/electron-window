@@ -12,16 +12,16 @@
   },
   "dependencies": {
     "electron-window-state": "^5.0.3",
-    "jsonfile": "^6.1.0"
+    "jsonfile": "^6.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@fiahfy/biome-config": "^0.0.1",
-    "@tsconfig/node20": "^20.1.4",
+    "@biomejs/biome": "^2.2.2",
+    "@fiahfy/biome-config": "^0.0.2",
+    "@tsconfig/node20": "^20.1.6",
     "@types/jsonfile": "^6.1.4",
-    "electron": "^35.0.1",
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.8"
+    "electron": "^37.3.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=20"
