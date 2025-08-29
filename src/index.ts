@@ -16,9 +16,15 @@ const prefix = 'electron-window.'
 
 type State = { ids: number[] }
 
-export const createManager = <T>(
-  baseCreateWindow: (options: BrowserWindowConstructorOptions) => BrowserWindow,
-) => {
+export type WindowCreator = (
+  optionsResolver: (
+    newWindowOptions?: Partial<
+      Pick<BrowserWindowConstructorOptions, 'width' | 'height'>
+    >,
+  ) => BrowserWindowConstructorOptions,
+) => BrowserWindow
+
+export const createManager = <T>(windowCreator: WindowCreator) => {
   const isMac = process.platform === 'darwin'
   const savedDirectoryPath = app.getPath('userData')
   const savedPath = join(savedDirectoryPath, 'window-state.json')
@@ -73,12 +79,38 @@ export const createManager = <T>(
     return isMac && !isFullScreen && isWindowButtonVisibility
   }
 
-  const createWindow = (
-    id: number,
-    params?: T,
-    options?: BrowserWindowConstructorOptions,
+  const getDefaultNewWindowOptions = (
+    newWindowOptions?: Partial<
+      Pick<BrowserWindowConstructorOptions, 'width' | 'height'>
+    >,
   ) => {
-    if (options) {
+    const activeWindow = BrowserWindow.getFocusedWindow()
+    if (activeWindow) {
+      const bounds = activeWindow.getBounds()
+      return {
+        ...bounds,
+        x: bounds.x + 30,
+        y: bounds.y + 30,
+      }
+    }
+
+    const cursor = screen.getCursorScreenPoint()
+    const display = screen.getDisplayNearestPoint(cursor)
+    const bounds = display.bounds
+    const size = {
+      height: 600,
+      width: 800,
+      ...newWindowOptions,
+    }
+    return {
+      ...size,
+      x: bounds.x + Math.trunc((bounds.width - size.width) / 2),
+      y: bounds.y + Math.trunc((bounds.height - size.height) / 2),
+    }
+  }
+
+  const createWindow = (id: number, newWindowArgs?: { params?: T }) => {
+    if (newWindowArgs) {
       deleteWindowFile(id)
     }
 
@@ -87,9 +119,15 @@ export const createManager = <T>(
       file: getWindowFilename(id),
     })
 
-    const browserWindow = baseCreateWindow({ ...windowState, ...options })
+    const browserWindow = windowCreator((newWindowOptions) => ({
+      ...windowState,
+      ...(newWindowArgs ? getDefaultNewWindowOptions(newWindowOptions) : {}),
+    }))
 
-    windowData[browserWindow.id] = { id, ...(params ? { params } : {}) }
+    windowData[browserWindow.id] = {
+      id,
+      ...(newWindowArgs?.params ? { params: newWindowArgs.params } : {}),
+    }
 
     browserWindow.on('close', () => {
       delete windowData[browserWindow.id]
@@ -130,27 +168,6 @@ export const createManager = <T>(
     return browserWindow
   }
 
-  const getDefaultOptions = () => {
-    const activeWindow = BrowserWindow.getFocusedWindow()
-    if (activeWindow) {
-      const bounds = activeWindow.getBounds()
-      return {
-        ...bounds,
-        x: bounds.x + 30,
-        y: bounds.y + 30,
-      }
-    }
-
-    const cursor = screen.getCursorScreenPoint()
-    const display = screen.getDisplayNearestPoint(cursor)
-    return {
-      height: 600,
-      width: 800,
-      x: display.bounds.x,
-      y: display.bounds.y,
-    }
-  }
-
   const findMissingId = () =>
     state.ids
       .sort((a, b) => a - b)
@@ -159,7 +176,7 @@ export const createManager = <T>(
   const create = (params?: T) => {
     const id = findMissingId()
     state = { ...state, ids: [...state.ids, id] }
-    return createWindow(id, params, getDefaultOptions())
+    return createWindow(id, { params })
   }
 
   const restore = () => {
