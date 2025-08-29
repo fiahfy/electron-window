@@ -7,6 +7,7 @@ import {
   type IpcMainEvent,
   type IpcMainInvokeEvent,
   ipcMain,
+  screen,
 } from 'electron'
 import windowStateKeeper from 'electron-window-state'
 import { readFileSync, writeFileSync } from 'jsonfile'
@@ -131,21 +132,22 @@ export const createManager = <T>(
 
   const getDefaultOptions = () => {
     const activeWindow = BrowserWindow.getFocusedWindow()
-    if (!activeWindow) {
+    if (activeWindow) {
+      const bounds = activeWindow.getBounds()
       return {
-        height: 600,
-        width: 800,
-        x: 0,
-        y: 0,
+        ...bounds,
+        x: bounds.x + 30,
+        y: bounds.y + 30,
       }
     }
 
-    const bounds = activeWindow.getBounds()
-
+    const cursor = screen.getCursorScreenPoint()
+    const display = screen.getDisplayNearestPoint(cursor)
     return {
-      ...bounds,
-      x: bounds.x + 30,
-      y: bounds.y + 30,
+      height: 600,
+      width: 800,
+      x: display.bounds.x,
+      y: display.bounds.y,
     }
   }
 
