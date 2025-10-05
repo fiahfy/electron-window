@@ -14,6 +14,12 @@ vi.mock('electron', () => {
   return { BrowserWindow, app, ipcMain }
 })
 
+vi.mock('electron-window-state', () => {
+  return {
+    default: vi.fn(),
+  }
+})
+
 describe('createManager', () => {
   test('should work', () => {
     const baseCreateWindow = () => new BrowserWindow()
