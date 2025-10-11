@@ -15,12 +15,12 @@
     "jsonfile": "6.2.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.4",
+    "@biomejs/biome": "2.2.5",
     "@fiahfy/biome-config": "0.0.2",
     "@tsconfig/node20": "20.1.6",
     "@types/jsonfile": "6.1.4",
     "electron": "38.0.0",
-    "typescript": "5.9.2",
+    "typescript": "5.9.3",
     "vitest": "3.2.4"
   },
   "engines": {
