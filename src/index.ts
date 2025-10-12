@@ -2,8 +2,8 @@ import { unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   app,
+  type BaseWindowConstructorOptions,
   BrowserWindow,
-  type BrowserWindowConstructorOptions,
   type IpcMainEvent,
   type IpcMainInvokeEvent,
   ipcMain,
@@ -18,10 +18,8 @@ type State = { ids: number[] }
 
 export type WindowCreator = (
   optionsResolver: (
-    newWindowOptions?: Partial<
-      Pick<BrowserWindowConstructorOptions, 'width' | 'height'>
-    >,
-  ) => BrowserWindowConstructorOptions,
+    options?: Partial<Pick<BaseWindowConstructorOptions, 'width' | 'height'>>,
+  ) => BaseWindowConstructorOptions,
 ) => BrowserWindow
 
 export const createManager = <T>(windowCreator: WindowCreator) => {
@@ -32,7 +30,7 @@ export const createManager = <T>(windowCreator: WindowCreator) => {
   let state: State = { ids: [] }
 
   const windowData: {
-    [browserWindowId: number]: { id: number; params?: T }
+    [browserWindowId: number]: { id: number; params: T | undefined }
   } = {}
 
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -79,29 +77,35 @@ export const createManager = <T>(windowCreator: WindowCreator) => {
     return isMac && !isFullScreen && isWindowButtonVisibility
   }
 
-  const getDefaultNewWindowOptions = (
-    newWindowOptions?: Partial<
-      Pick<BrowserWindowConstructorOptions, 'width' | 'height'>
-    >,
-  ) => {
+  const getBoundsByActiveWindow = () => {
     const activeWindow = BrowserWindow.getFocusedWindow()
-    if (activeWindow) {
-      const bounds = activeWindow.getBounds()
-      return {
-        ...bounds,
-        x: bounds.x + 30,
-        y: bounds.y + 30,
+    if (!activeWindow) {
+      return undefined
+    }
+
+    const bounds = activeWindow.getBounds()
+    return {
+      ...bounds,
+      x: bounds.x + 30,
+      y: bounds.y + 30,
+    }
+  }
+
+  const getBounds = (
+    size: { height: number; width: number },
+    byActiveWindow: boolean,
+  ) => {
+    if (byActiveWindow) {
+      const activeWindowBounds = getBoundsByActiveWindow()
+      if (activeWindowBounds) {
+        return activeWindowBounds
       }
     }
 
     const cursor = screen.getCursorScreenPoint()
     const display = screen.getDisplayNearestPoint(cursor)
     const bounds = display.bounds
-    const size = {
-      height: 600,
-      width: 800,
-      ...newWindowOptions,
-    }
+
     return {
       ...size,
       x: bounds.x + Math.trunc((bounds.width - size.width) / 2),
@@ -109,8 +113,14 @@ export const createManager = <T>(windowCreator: WindowCreator) => {
     }
   }
 
-  const createWindow = (id: number, newWindowArgs?: { params?: T }) => {
-    if (newWindowArgs) {
+  const createWindow = (
+    id: number,
+    args?: {
+      params?: T
+      options?: Partial<BaseWindowConstructorOptions>
+    },
+  ) => {
+    if (args) {
       deleteWindowFile(id)
     }
 
@@ -119,14 +129,24 @@ export const createManager = <T>(windowCreator: WindowCreator) => {
       file: getWindowFilename(id),
     })
 
-    const browserWindow = windowCreator((newWindowOptions) => ({
+    const browserWindow = windowCreator((options) => ({
       ...windowState,
-      ...(newWindowArgs ? getDefaultNewWindowOptions(newWindowOptions) : {}),
+      ...(args
+        ? getBounds(
+            {
+              height: 600,
+              width: 800,
+              ...options,
+              ...args.options,
+            },
+            !args.options,
+          )
+        : {}),
     }))
 
     windowData[browserWindow.id] = {
       id,
-      ...(newWindowArgs?.params ? { params: newWindowArgs.params } : {}),
+      params: args ? args.params : undefined,
     }
 
     browserWindow.on('close', () => {
@@ -173,10 +193,13 @@ export const createManager = <T>(windowCreator: WindowCreator) => {
       .sort((a, b) => a - b)
       .reduce((acc, i) => (i === acc ? acc + 1 : acc), 1)
 
-  const create = (params?: T) => {
+  const create = (
+    params?: T,
+    options?: Partial<BaseWindowConstructorOptions>,
+  ) => {
     const id = findMissingId()
     state = { ...state, ids: [...state.ids, id] }
-    return createWindow(id, { params })
+    return createWindow(id, { params, options })
   }
 
   const restore = () => {
@@ -186,8 +209,7 @@ export const createManager = <T>(windowCreator: WindowCreator) => {
 
   const save = () => saveState()
 
-  // window
-  ipcMain.handle(`${prefix}restore`, (event: IpcMainInvokeEvent) => {
+  ipcMain.handle(`${prefix}getData`, (event: IpcMainInvokeEvent) => {
     const browserWindowId = BrowserWindow.fromWebContents(event.sender)?.id
     if (!browserWindowId) {
       return undefined
@@ -200,8 +222,14 @@ export const createManager = <T>(windowCreator: WindowCreator) => {
     data.params = undefined
     return clonedData
   })
-  ipcMain.on(`${prefix}open`, (_event: IpcMainEvent, params?: T) =>
-    create(params),
+  // window
+  ipcMain.on(
+    `${prefix}open`,
+    (
+      _event: IpcMainEvent,
+      params: T | undefined,
+      options: Partial<BaseWindowConstructorOptions> | undefined,
+    ) => create(params, options),
   )
   ipcMain.on(`${prefix}close`, (event: IpcMainEvent) => {
     const window = BrowserWindow.fromWebContents(event.sender)

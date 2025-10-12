@@ -1,11 +1,15 @@
-import { type IpcRendererEvent, ipcRenderer } from 'electron'
+import {
+  type BaseWindowConstructorOptions,
+  type IpcRendererEvent,
+  ipcRenderer,
+} from 'electron'
 
 const prefix = 'electron-window.'
 
 export type Operations<T> = {
+  getData: () => Promise<{ id: number; params: T | undefined } | undefined>
   // window
-  restore: () => Promise<{ id: number; params?: T }>
-  open: (params?: T) => void
+  open: (params?: T, options?: Partial<BaseWindowConstructorOptions>) => void
   close: () => void
   // fullscreen
   onFullscreenChange: (callback: (fullscreen: boolean) => void) => () => void
@@ -34,9 +38,10 @@ export type Operations<T> = {
 
 export const exposeOperations = <T>(): Operations<T> => {
   return {
+    getData: () => ipcRenderer.invoke(`${prefix}getData`),
     // window
-    restore: () => ipcRenderer.invoke(`${prefix}restore`),
-    open: (params?: T) => ipcRenderer.send(`${prefix}open`, params),
+    open: (params?: T, options?: Partial<BaseWindowConstructorOptions>) =>
+      ipcRenderer.send(`${prefix}open`, params, options),
     close: () => ipcRenderer.send(`${prefix}close`),
     // fullscreen
     onFullscreenChange: (callback: (fullscreen: boolean) => void) => {
