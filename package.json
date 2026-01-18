@@ -1,6 +1,6 @@
 {
   "name": "@fiahfy/electron-window",
-  "description": "Manage Window States in Electron Apps.",
+  "description": "A helper library for managing windows in Electron applications.",
   "version": "0.1.9",
   "author": {
     "name": "fiahfy",

@@ -2,7 +2,7 @@
 
 [![Publish](https://github.com/fiahfy/electron-window/actions/workflows/publish.yml/badge.svg)](https://github.com/fiahfy/electron-window/actions/workflows/publish.yml)
 
-> Manage Window States in Electron Apps.
+> A helper library for managing windows in Electron applications.
 
 ## Installation
 
